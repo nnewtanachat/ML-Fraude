@@ -1,0 +1,41 @@
+# ===== Core data & numerics =====
+numpy>=1.26
+pandas>=2.2
+scipy>=1.14
+
+# ===== Machine learning =====
+scikit-learn>=1.5
+xgboost>=2.1
+lightgbm>=4.5
+imbalanced-learn>=0.12          # SMOTE / under-over sampling for class imbalance
+
+# ===== Visualization (EDA) =====
+matplotlib>=3.9
+seaborn>=0.13
+
+# ===== Experiment tracking & model registry =====
+mlflow>=2.16
+
+# ===== Model serving / API =====
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.9
+pydantic-settings>=2.0
+
+# ===== Data validation / monitoring =====
+evidently>=0.4
+pandera>=0.20
+
+# ===== Persistence / utils =====
+joblib>=1.4
+python-dotenv>=1.0
+pyyaml>=6.0
+
+# ===== Kaggle dataset download =====
+kaggle>=1.6
+
+# ===== Testing =====
+pytest>=8.3
+
+psycopg2-binary
+sqlalchemy
