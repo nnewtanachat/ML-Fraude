@@ -17,3 +17,4 @@ class Transaction(BaseModel):
 class PredictionResponse(BaseModel):
     fraud_probability: float
     is_fraud: bool
+    threshold: float

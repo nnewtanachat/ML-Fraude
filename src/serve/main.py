@@ -42,4 +42,5 @@ def predict(txn: Transaction,settings: Settings = Depends(get_settings),api_key:
     return PredictionResponse(
         fraud_probability=round(proba, 4),
         is_fraud=is_fraud,
+        threshold=settings.FRAUD_THRESHOLD,
     )
