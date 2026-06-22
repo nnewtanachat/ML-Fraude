@@ -1,0 +1,25 @@
+# Ruff linter & formatter configuration
+target-version = "py312"
+line-length = 120
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "S",    # flake8-bandit (security)
+    "UP",   # pyupgrade
+]
+ignore = [
+    "S101",  # allow assert in tests
+    "B008",  # allow Depends() in function defaults (FastAPI pattern)
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["S101", "S106"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

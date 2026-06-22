@@ -22,6 +22,9 @@ uvicorn[standard]>=0.30
 pydantic>=2.9
 pydantic-settings>=2.0
 
+# ===== Observability =====
+prometheus-client>=0.21
+
 # ===== Data validation / monitoring =====
 evidently>=0.4
 pandera>=0.20
