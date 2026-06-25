@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import joblib
 import pandas as pd
 from fastapi import FastAPI, Depends, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
 from .config import Settings, get_settings
@@ -47,12 +47,37 @@ MODEL_LOADED = Gauge(
 ml_models: dict = {}
 
 
+def load_model(settings: Settings):
+    """Load model from MLflow Registry or local file.
+
+    Supports 2 modes:
+    - MLflow: MODEL_PATH="models:/fraud_detector/Production"
+    - File:   MODEL_PATH="model/fraud_pipeline.pkl"
+    """
+    model_path = settings.MODEL_PATH
+
+    if model_path.startswith("models:/"):
+        # ===== Mode: MLflow Model Registry (Production) =====
+        import mlflow
+
+        mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+        logger.info(
+            "Loading model from MLflow Registry: %s (tracking: %s)",
+            model_path, settings.MLFLOW_TRACKING_URI,
+        )
+        return mlflow.sklearn.load_model(model_path)
+
+    else:
+        # ===== Mode: Local file (dev / fallback) =====
+        logger.info("Loading model from file: %s", model_path)
+        return joblib.load(model_path)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    logger.info("Loading model from path: %s", settings.MODEL_PATH)
     try:
-        ml_models["pipeline"] = joblib.load(settings.MODEL_PATH)
+        ml_models["pipeline"] = load_model(settings)
         MODEL_LOADED.set(1)
         logger.info("Model loaded successfully")
     except Exception as e:
@@ -101,8 +126,8 @@ def health():
 @app.get("/metrics")
 def metrics():
     """Prometheus metrics endpoint."""
-    return JSONResponse(
-        content=generate_latest().decode("utf-8"),
+    return Response(
+        content=generate_latest(),
         media_type=CONTENT_TYPE_LATEST,
     )
 

@@ -1,0 +1,46 @@
+# pgAdmin Ingress สำหรับ AWS (ใช้ ALB Ingress Controller)
+#
+# ก่อนใช้:
+# 1. Install AWS Load Balancer Controller:
+#    helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+#      --namespace kube-system --set clusterName=fraud-cluster
+# 2. สร้าง ACM certificate (ฟรี) ผ่าน AWS Console
+# 3. ตั้ง Route 53 DNS → ALB
+# 4. เปลี่ยน CHANGE_ME ทั้งหมด
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pgadmin-ingress
+  namespace: fraud-detection
+  annotations:
+    # ใช้ AWS ALB
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+
+    # HTTPS (ใส่ ACM cert ARN)
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-southeast-1:ACCOUNT:certificate/CHANGE_ME"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+
+    # WAF (ใส่ WAF Web ACL ARN)
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-southeast-1:ACCOUNT:regional/webacl/CHANGE_ME"
+
+    # Health check
+    alb.ingress.kubernetes.io/healthcheck-path: /misc/ping
+    alb.ingress.kubernetes.io/healthcheck-port: "80"
+
+    # IP Whitelist (ทำผ่าน WAF rules แทน — หรือใช้ Security Group)
+spec:
+  rules:
+    - host: pgadmin.fraud.example.com    # ← เปลี่ยนเป็น domain จริง
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pgadmin
+                port:
+                  number: 80

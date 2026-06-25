@@ -1,8 +1,43 @@
-venv/
-__pycache__/
+# Git
+.git
+.gitignore
+
+# Python
+.venv
+venv
+__pycache__
 *.pyc
-.git/
+*.pyo
+
+# IDE
+.vscode
+.idea
+.kiro
+
+# ML artifacts (ไม่ต้องใส่ image — โหลดจาก MLflow)
+mlruns/
+mlflow.db
 notebook/
+model/
+
+# Data (ไม่จำเป็นใน production image)
 data/
-.env
+
+# K8s / Infra
+k8s/
+.github/
+docker-compose.yml
+
+# OS
 .DS_Store
+*.swp
+
+# Tests (ไม่ต้องใน production image)
+tests/
+pytest.ini
+.pytest_cache/
+
+# Docs
+*.md
+SUMMARY.md
+ARCHITECTURE.md

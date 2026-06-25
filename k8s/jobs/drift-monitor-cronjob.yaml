@@ -1,0 +1,40 @@
+# Daily Drift Monitor — ทุกวัน 7 โมง
+# ตรวจ data drift + prediction drift
+# Log warning ถ้าเจอ drift
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: drift-monitor
+  namespace: fraud-detection
+spec:
+  schedule: "0 7 * * *"
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: drift-monitor
+              image: ml-fraud:v1
+              command: ["python", "-m", "src.monitoring.drift_monitor"]
+              envFrom:
+                - configMapRef:
+                    name: fraud-config
+                - secretRef:
+                    name: fraud-secrets
+              env:
+                - name: DRIFT_THRESHOLD
+                  value: "0.3"
+                - name: PREDICTION_DRIFT_THRESHOLD
+                  value: "0.1"
+                - name: DRIFT_LOOKBACK_DAYS
+                  value: "7"
+              resources:
+                requests:
+                  memory: "512Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "500m"
+          restartPolicy: OnFailure

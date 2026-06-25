@@ -1,19 +1,38 @@
+import os
+import logging
+from pathlib import Path
+
 import pandas as pd
-from connection import engine
-from models import Base
+from dotenv import load_dotenv
 
-Base.metadata.create_all(engine)
+from src.db.connection import engine
+from src.db.models import Base
 
-df = pd.read_csv("../../data/fraud.csv")
-int_cols = ["num_items", "device_type", "store_type", "is_fraud"]
-bool_cols = ["is_weekend", "is_first_transaction"]
+load_dotenv()
 
-for col in int_cols:
-    df[col] = df[col].astype("Int64")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-for col in bool_cols:
-    df[col] = df[col].astype("boolean")
+DATA_PATH = os.getenv("DATA_PATH", str(Path(__file__).resolve().parents[2] / "data" / "fraud.csv"))
 
-df.to_sql("transactions", engine, if_exists="append", index=False)
 
-print(f"Loaded {len(df)} rows into transactions")
+def main():
+    Base.metadata.create_all(engine)
+
+    df = pd.read_csv(DATA_PATH)
+    int_cols = ["num_items", "device_type", "store_type", "is_fraud"]
+    bool_cols = ["is_weekend", "is_first_transaction"]
+
+    for col in int_cols:
+        df[col] = df[col].astype("Int64")
+
+    for col in bool_cols:
+        df[col] = df[col].astype("boolean")
+
+    df.to_sql("transactions", engine, if_exists="append", index=False)
+
+    logger.info("Loaded %d rows into transactions", len(df))
+
+
+if __name__ == "__main__":
+    main()

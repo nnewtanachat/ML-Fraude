@@ -1,0 +1,23 @@
+# Pod Disruption Budget — ป้องกัน pods ถูกลบพร้อมกัน (HA)
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fraud-api-pdb
+  namespace: fraud-detection
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: fraud-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fraud-scorer-pdb
+  namespace: fraud-detection
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: fraud-scorer

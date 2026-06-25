@@ -1,0 +1,80 @@
+# จำกัดว่า pod ไหนคุยกับ pod ไหนได้
+---
+# Rule 1: API รับ traffic จาก Ingress + internal pods เท่านั้น
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-network-policy
+  namespace: fraud-detection
+spec:
+  podSelector:
+    matchLabels:
+      app: fraud-api
+  policyTypes:
+    - Ingress
+  ingress:
+    # จาก Ingress Controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 8000
+    # จาก pods ใน namespace เดียวกัน
+    - from:
+        - podSelector: {}
+      ports:
+        - port: 8000
+---
+# Rule 2: DB รับ connection จาก API, Producer, Scorer เท่านั้น
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-network-policy
+  namespace: fraud-detection
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: fraud-api
+        - podSelector:
+            matchLabels:
+              app: fraud-producer
+        - podSelector:
+            matchLabels:
+              app: fraud-scorer
+        - podSelector:
+            matchLabels:
+              app: pgadmin
+      ports:
+        - port: 5432
+---
+# Rule 3: Default deny — ถ้าไม่มี rule อนุญาต = block
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: fraud-detection
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress:
+    # อนุญาตให้ออก DNS (จำเป็นสำหรับ service discovery)
+    - to: []
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # อนุญาตให้คุยกันภายใน namespace
+    - to:
+        - podSelector: {}

@@ -12,7 +12,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from xgboost import XGBClassifier
 
-from src.preprocess import build_preprocessor, add_features, FEATURE_COLS, TARGET_COL
+from src.pipeline.preprocess import build_preprocessor, add_features, FEATURE_COLS, TARGET_COL
 
 load_dotenv()
 
@@ -38,12 +38,12 @@ def load_data():
 
 def main():
     X, y = load_data()
-    logger.info(f"Data: {len(X)} rows, {len(FEATURE_COLS)} features")
+    logger.info("Data: %d rows, %d features", len(X), len(FEATURE_COLS))
 
     X_trainval, X_test, y_trainval, y_test = train_test_split(
         X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
     )
-    logger.info(f"Train+Val: {len(X_trainval)}, Test (held-out): {len(X_test)}")
+    logger.info("Train+Val: %d, Test (held-out): %d", len(X_trainval), len(X_test))
 
     scale_pos_weight = (y_trainval == 0).sum() / (y_trainval == 1).sum()
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
@@ -97,9 +97,9 @@ def main():
     with open(PARAMS_PATH, "w") as f:
         json.dump(output, f, indent=2)
 
-    logger.info(f"Best CV ROC-AUC: {study.best_value:.4f}")
-    logger.info(f"Best params saved to {PARAMS_PATH}")
-    logger.info(f"Params: {json.dumps(best_params, indent=2)}")
+    logger.info("Best CV ROC-AUC: %.4f", study.best_value)
+    logger.info("Best params saved to %s", PARAMS_PATH)
+    logger.info("Params: %s", json.dumps(best_params, indent=2))
 
 
 if __name__ == "__main__":

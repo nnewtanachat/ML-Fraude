@@ -25,7 +25,7 @@ from xgboost import XGBClassifier
 import mlflow
 import mlflow.sklearn
 
-from src.preprocess import build_preprocessor, add_features, FEATURE_COLS, TARGET_COL
+from src.pipeline.preprocess import build_preprocessor, add_features, FEATURE_COLS, TARGET_COL
 
 load_dotenv()
 
@@ -45,7 +45,7 @@ def load_params() -> dict:
         with open(PARAMS_PATH) as f:
             data = json.load(f)
         params = data.get("params", data)
-        logger.info(f"Loaded params from {PARAMS_PATH}")
+        logger.info("Loaded params from %s", PARAMS_PATH)
         return params
     else:
         logger.info("Using default params (no best_params.json found)")
@@ -61,7 +61,7 @@ def load_params() -> dict:
 def load_data() -> pd.DataFrame:
     engine = create_engine(DATABASE_URL)
     df = pd.read_sql("SELECT * FROM transactions", engine)
-    logger.info(f"Loaded {len(df)} rows from database")
+    logger.info("Loaded %d rows from database", len(df))
     return df
 
 
@@ -87,7 +87,7 @@ def evaluate(pipeline: Pipeline, X_test, y_test) -> dict:
     }
 
     logger.info("\n" + classification_report(y_test, y_pred))
-    logger.info(f"Confusion matrix:\n{confusion_matrix(y_test, y_pred)}")
+    logger.info("Confusion matrix:\n%s", confusion_matrix(y_test, y_pred))
 
     ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
     plt.savefig("confusion_matrix.png")
@@ -96,7 +96,7 @@ def evaluate(pipeline: Pipeline, X_test, y_test) -> dict:
     os.remove("confusion_matrix.png")
 
     for name, value in metrics.items():
-        logger.info(f"{name}: {value:.4f}")
+        logger.info("%s: %.4f", name, value)
 
     return metrics
 
@@ -115,11 +115,11 @@ def main():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
     )
-    logger.info(f"Train: {len(X_train)}, Test: {len(X_test)}")
+    logger.info("Train: %d, Test: %d", len(X_train), len(X_test))
 
     # 3. scale_pos_weight
     scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
-    logger.info(f"scale_pos_weight: {scale_pos_weight:.2f}")
+    logger.info("scale_pos_weight: %.2f", scale_pos_weight)
 
     # 4. Train + MLflow tracking
     mlflow.set_experiment(MLFLOW_EXPERIMENT)
@@ -144,7 +144,7 @@ def main():
         )
         os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
         joblib.dump(pipeline, MODEL_PATH)
-        logger.info(f"Saved model to {MODEL_PATH}")
+        logger.info("Saved model to %s", MODEL_PATH)
 
 
 if __name__ == "__main__":

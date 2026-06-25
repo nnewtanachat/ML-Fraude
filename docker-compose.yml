@@ -67,6 +67,8 @@ services:
       API_KEY: ${API_KEY}
       FRAUD_THRESHOLD: ${FRAUD_THRESHOLD}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./model:/app/model:ro
     depends_on:
       db:
         condition: service_healthy
@@ -86,6 +88,8 @@ services:
       FRAUD_THRESHOLD: ${FRAUD_THRESHOLD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./model:/app/model:ro
     depends_on:
       db:
         condition: service_healthy
@@ -93,7 +97,7 @@ services:
         condition: service_healthy
       api:
         condition: service_started
-    command: python -m src.kafka_consumer
+    command: python -m src.streaming.consumer
     deploy:
       resources:
         limits:
@@ -115,7 +119,7 @@ services:
         condition: service_healthy
       api:
         condition: service_started
-    command: python -m src.kafka_producer
+    command: python -m src.streaming.producer
     deploy:
       resources:
         limits:

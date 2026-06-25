@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.preprocess import (
+from src.pipeline.preprocess import (
     build_preprocessor,
     FEATURE_COLS,
     CONTINUOUS_COLS,
@@ -58,11 +58,14 @@ def test_column_count(sample_data):
     assert result.shape[1] == len(FEATURE_COLS)
 
 
-# ===== Test 5: continuous columns ถูก scale (mean ใกล้ 0) =====
-def test_continuous_scaled(sample_data):
+# ===== Test 5: continuous columns ถูก impute ด้วย median (ไม่มี NaN) =====
+def test_continuous_imputed_with_median(sample_data):
     preprocessor = build_preprocessor()
     result = preprocessor.fit_transform(sample_data)
     # 6 column แรกคือ continuous (ตามลำดับใน ColumnTransformer)
     continuous_part = result[:, :len(CONTINUOUS_COLS)]
-    means = continuous_part.mean(axis=0)
-    assert np.allclose(means, 0, atol=1e-6), "continuous ควร scale ให้ mean=0"
+    # หลัง impute ต้องไม่มี NaN
+    assert not np.isnan(continuous_part).any(), "continuous columns ต้องไม่มี NaN หลัง impute"
+    # ค่า imputed ควรเป็น median ของ column ที่ไม่ใช่ NaN
+    # ตรวจ transaction_amount: [100, NaN, 200, 150, 80] → median = 125
+    assert continuous_part[1, 0] == pytest.approx(125.0), "NaN ควรถูก impute ด้วย median"

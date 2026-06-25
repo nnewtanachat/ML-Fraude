@@ -1,0 +1,51 @@
+# Daily DB backup — ทุกวัน ตี 3
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup
+  namespace: fraud-detection
+spec:
+  schedule: "0 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: bitnami/postgresql:16
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  PGPASSWORD=$POSTGRES_PASSWORD pg_dump \
+                    -h postgres-postgresql.fraud-detection.svc \
+                    -U $POSTGRES_USER \
+                    -d fraud_detection \
+                    -F c \
+                    -f /backup/fraud_detection_$(date +%Y%m%d_%H%M%S).dump
+                  echo "Backup completed: $(date)"
+              envFrom:
+                - secretRef:
+                    name: fraud-secrets
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backup
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: db-backup-pvc
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-backup-pvc
+  namespace: fraud-detection
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

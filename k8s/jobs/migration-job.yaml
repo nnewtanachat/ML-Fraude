@@ -1,0 +1,20 @@
+# Run DB migrations before deploying app
+# Usage: kubectl apply -f k8s/migration-job.yaml
+# แล้วรอจน Complete: kubectl get jobs -n fraud-detection
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration
+  namespace: fraud-detection
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          image: ml-fraud:v1
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - secretRef:
+                name: fraud-secrets
+      restartPolicy: OnFailure
+  backoffLimit: 3

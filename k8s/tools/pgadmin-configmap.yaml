@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgadmin-servers-config
+  namespace: fraud-detection
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "Fraud Detection DB",
+          "Group": "Production",
+          "Host": "postgres-postgresql.fraud-detection.svc",
+          "Port": 5432,
+          "MaintenanceDB": "fraud_detection",
+          "Username": "admin",
+          "SSLMode": "prefer"
+        }
+      }
+    }

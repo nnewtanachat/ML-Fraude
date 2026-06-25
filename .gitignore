@@ -1,11 +1,34 @@
+# Environment
 .env
 venv/
+.venv/
+
+# Python cache
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+
+# OS files
 .DS_Store
+*.swp
+
+# ML artifacts (local dev only)
 mlruns/
 mlflow.db
-*.png
-mlflow.db
-best_params.json
 model/
+best_params.json
+
+# K8s secrets (ห้าม commit ค่าจริง!)
+k8s/overlays/dev/secret.yaml
+k8s/overlays/prod/secret.yaml
+
+# Alembic (มี password ใน config)
+alembic.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Duplicate folders (ใช้ dags/ ที่ root แทน)
+src/dag/

@@ -1,0 +1,16 @@
+# จำกัด resource ทั้ง namespace — ป้องกันใช้ resource เกิน
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: fraud-detection-quota
+  namespace: fraud-detection
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: "8Gi"
+    limits.cpu: "8"
+    limits.memory: "16Gi"
+    pods: "30"
+    services: "10"
+    secrets: "20"
+    configmaps: "20"

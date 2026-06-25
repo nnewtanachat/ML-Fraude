@@ -1,0 +1,31 @@
+# Daily batch prediction — ทุกวัน 6 โมง (กวาด transactions ที่ตกหล่น)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: batch-predict
+  namespace: fraud-detection
+spec:
+  schedule: "0 6 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: batch-predict
+              image: ml-fraud:v1
+              command: ["python", "-m", "src.monitoring.batch_prediction"]
+              envFrom:
+                - configMapRef:
+                    name: fraud-config
+                - secretRef:
+                    name: fraud-secrets
+              resources:
+                requests:
+                  memory: "512Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "500m"
+          restartPolicy: OnFailure

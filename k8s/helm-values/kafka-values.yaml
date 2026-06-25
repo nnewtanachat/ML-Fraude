@@ -1,0 +1,26 @@
+# Kafka Helm values
+# Usage: helm install kafka bitnami/kafka -n fraud-detection -f k8s/kafka-values.yaml
+controller:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+listeners:
+  client:
+    protocol: PLAINTEXT
+
+provisioning:
+  enabled: true
+  topics:
+    - name: transactions
+      partitions: 3
+      replicationFactor: 1
+
+metrics:
+  kafka:
+    enabled: true  # Prometheus metrics

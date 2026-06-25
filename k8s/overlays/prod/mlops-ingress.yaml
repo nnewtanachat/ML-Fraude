@@ -1,0 +1,76 @@
+# MLOps Tools Ingress — ให้ ML Engineer เข้าถึง internal tools
+# Security: HTTPS + IP whitelist (เฉพาะทีม)
+#
+# ก่อนใช้:
+# 1. ต้องมี domain + DNS ชี้มา cluster
+# 2. ต้อง install: ingress-nginx, cert-manager, MLflow, Grafana, Airflow
+# 3. เปลี่ยน CHANGE_ME_OFFICE_IP เป็น IP จริง
+# 4. เปลี่ยน fraud.example.com เป็น domain จริง
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mlops-tools-ingress
+  namespace: fraud-detection
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/whitelist-source-range: "CHANGE_ME_OFFICE_IP/32"
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - pgadmin.fraud.example.com
+        - mlflow.fraud.example.com
+        - grafana.fraud.example.com
+        - airflow.fraud.example.com
+      secretName: mlops-tools-tls
+  rules:
+    # pgAdmin — Query DB
+    - host: pgadmin.fraud.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pgadmin
+                port:
+                  number: 80
+
+    # MLflow — Model experiments, metrics, registry
+    - host: mlflow.fraud.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mlflow
+                port:
+                  number: 5000
+
+    # Grafana — Monitoring dashboard (model drift, API metrics)
+    - host: grafana.fraud.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+
+    # Airflow — Training pipeline
+    - host: airflow.fraud.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: airflow-webserver
+                port:
+                  number: 8080

@@ -1,0 +1,28 @@
+# Init script — รันอัตโนมัติตอน PostgreSQL start ครั้งแรก
+# Passwords ดึงจาก environment variables ที่ inject จาก Secret
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: fraud-detection
+data:
+  init-users.sh: |
+    #!/bin/bash
+    set -e
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+      -- User สำหรับ API (อ่าน transactions + เขียน predictions)
+      CREATE USER api_user WITH PASSWORD '${DB_API_USER_PASSWORD}';
+      GRANT SELECT ON transactions TO api_user;
+      GRANT SELECT, INSERT ON predictions TO api_user;
+
+      -- User สำหรับ Scorer/Producer (อ่าน transactions + เขียน predictions)
+      CREATE USER scorer_user WITH PASSWORD '${DB_SCORER_USER_PASSWORD}';
+      GRANT SELECT ON transactions TO scorer_user;
+      GRANT SELECT, INSERT ON predictions TO scorer_user;
+
+      -- User สำหรับ Analyst (อ่านอย่างเดียว — query ได้ ลบ/แก้ไม่ได้)
+      CREATE USER analyst WITH PASSWORD '${DB_ANALYST_PASSWORD}';
+      GRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analyst;
+    EOSQL
+    echo 'Created users: api_user, scorer_user, analyst'

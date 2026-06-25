@@ -1,0 +1,39 @@
+# Horizontal Pod Autoscaler — auto-scale API based on CPU/memory
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fraud-api-hpa
+  namespace: fraud-detection
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fraud-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70   # scale up เมื่อ CPU > 70%
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80   # scale up เมื่อ memory > 80%
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30   # รอ 30 วิ ก่อน scale up
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60            # เพิ่มทีละ 2 pods ต่อนาที
+    scaleDown:
+      stabilizationWindowSeconds: 300  # รอ 5 นาที ก่อน scale down (ป้องกัน flapping)
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

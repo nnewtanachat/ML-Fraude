@@ -1,0 +1,89 @@
+# Airflow Helm Chart values
+# Install: helm install airflow apache-airflow/airflow -n fraud-detection -f k8s/airflow-values.yaml
+
+# ===== Executor =====
+# KubernetesExecutor: แต่ละ task สร้าง pod ใหม่ → รันเสร็จ → ลบ (ประหยัด resource)
+executor: KubernetesExecutor
+
+# ===== Webserver (UI) =====
+webserver:
+  defaultUser:
+    enabled: true
+    username: admin
+    password: admin123  # เปลี่ยนใน production!
+    email: admin@fraud-detection.com
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  service:
+    type: ClusterIP  # เข้าผ่าน port-forward (ปลอดภัย)
+
+# ===== Scheduler =====
+scheduler:
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# ===== DAGs — sync จาก Git อัตโนมัติ =====
+dags:
+  gitSync:
+    enabled: true
+    repo: https://github.com/YOUR_USER/ML-Fraud.git  # ← เปลี่ยนเป็น repo คุณ
+    branch: main
+    subPath: dags  # อ่าน DAGs จาก folder dags/ ใน repo
+    wait: 60       # sync ทุก 60 วินาที
+
+# ===== Worker Pods (KubernetesExecutor) =====
+workers:
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+# ===== PostgreSQL (Airflow metadata DB) =====
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: airflow-db-password  # เปลี่ยนใน production!
+  primary:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"
+
+# ===== Config =====
+config:
+  core:
+    load_examples: "False"
+    default_timezone: "Asia/Bangkok"
+  webserver:
+    expose_config: "False"  # ไม่โชว์ config ใน UI (security)
+
+# ===== Extra env vars ให้ DAGs ใช้ =====
+extraEnvFrom: |
+  - secretRef:
+      name: fraud-secrets
+  - configMapRef:
+      name: fraud-config
+
+# ===== Security =====
+securityContexts:
+  pod:
+    runAsUser: 50000
+    fsGroup: 0
+  containers:
+    runAsUser: 50000
